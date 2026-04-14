@@ -27,3 +27,15 @@ export {
   MissingKeyReporter,
   PerformanceTracker,
 } from "./lib/plugins/index.js";
+
+// Formatter utilities
+export { interpolate, pluralize, formatRelativeTime } from "./lib/formatter.js";
+export type { TranslateParams } from "./lib/formatter.js";
+
+// Locale detection
+export {
+  detectSystemLocale,
+  normalizeLocale,
+  isChineseLocale,
+} from "./lib/detector.js";
+export type { LocaleDetectionResult } from "./lib/detector.js";
