@@ -11,31 +11,23 @@ jobs:
   test:
     name: Test & Lint
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [18.x, 20.x]
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
-
       - name: Install dependencies
         run: npm ci
-
       - name: Type check
         run: npx tsc --noEmit
-
       - name: Run tests
         run: npm test
-
       - name: Build
         run: npm run build
 
@@ -44,23 +36,24 @@ jobs:
     needs: test
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
           registry-url: 'https://registry.npmjs.org'
-
       - name: Install dependencies
         run: npm ci
-
       - name: Build package
         run: npm run build
-
+      - name: Configure npm authentication
+        run: |
+          npm config set //registry.npmjs.org/:_authToken "${NODE_AUTH_TOKEN}"
+          npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.YYC3_NPM_TOKEN }}
       - name: Publish to npm
         run: npm publish --provenance --access public
         env:
@@ -71,28 +64,28 @@ jobs:
     needs: test
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
           registry-url: 'https://npm.pkg.github.com'
           scope: '@yyc3-cube'
-
       - name: Install dependencies
         run: npm ci
-
       - name: Build package
         run: npm run build
-
+      - name: Configure npm authentication
+        run: |
+          npm config set //npm.pkg.github.com/:_authToken "${NODE_AUTH_TOKEN}"
+          npm whoami
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.YYCCUBE_GIT_TOKEN }}
       - name: Publish to GitHub Packages
         run: npm publish --provenance
         env:
