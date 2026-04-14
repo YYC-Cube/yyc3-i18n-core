@@ -11,7 +11,7 @@
  * - Debug mode for development
  */
 
-import { getSafeLocalStorage } from "../../local-storage.js";
+import { getSafeLocalStorage } from "./local-storage.js";
 import { en } from "../locales/en.js";
 import {
   DEFAULT_LOCALE,
@@ -115,16 +115,13 @@ export class I18nEngine {
 
   private resolveInitialLocale(): Locale {
     const saved = this.readStoredLocale();
-    if (isSupportedLocale(saved)) {
+    if (saved && isSupportedLocale(saved)) {
       return saved;
     }
 
-    const language =
-      typeof globalThis.navigator?.language === "string"
-        ? globalThis.navigator.language
-        : null;
+    const detected = resolveNavigatorLocale();
 
-    return resolveNavigatorLocale(language ?? "");
+    return detected ?? DEFAULT_LOCALE;
   }
 
   private loadInitialLocale(): void {
@@ -153,7 +150,7 @@ export class I18nEngine {
 
     if (needsTranslationLoad) {
       try {
-        const translation = await loadLazyLocaleTranslation(locale);
+        const translation = await loadLazyLocaleTranslation(locale as Exclude<Locale, "en">);
         if (!translation) {
           const error = new Error(`Failed to load translation for locale: ${locale}`);
           this.handleError(error, { key: "", locale });

@@ -26,4 +26,4 @@ export {
   createConsoleLogger,
   MissingKeyReporter,
   PerformanceTracker,
-} from "./plugins/index.js";
+} from "./lib/plugins/index.js";

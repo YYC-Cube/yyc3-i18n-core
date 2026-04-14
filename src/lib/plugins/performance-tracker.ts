@@ -12,7 +12,7 @@ interface PerformanceEntry {
   cached: boolean;
 }
 
-interface PerformanceMetrics {
+export interface PerformanceMetrics {
   totalCalls: number;
   cacheHits: number;
   cacheMisses: number;
@@ -41,22 +41,24 @@ export class PerformanceTracker {
   }
 
   createPlugin(): I18nPlugin {
+    const self = this; // Preserve context
+
     return {
       name: "performance-tracker",
       version: "1.0.0",
 
       beforeTranslate(key: string) {
-        if (Math.random() <= this.config.samplingRate) {
-          this.timingMap.set(key, performance.now());
+        if (Math.random() <= self.config.samplingRate) {
+          self.timingMap.set(key, performance.now());
         }
       },
 
       afterTranslate(result: string, key: string): string | undefined {
-        const startTime = this.timingMap.get(key);
+        const startTime = self.timingMap.get(key);
         
         if (startTime !== undefined) {
           const duration = performance.now() - startTime;
-          this.timingMap.delete(key);
+          self.timingMap.delete(key);
 
           const entry: PerformanceEntry = {
             key,
@@ -65,16 +67,16 @@ export class PerformanceTracker {
             cached: duration < 1, // Assume <1ms means cached
           };
 
-          this.entries.push(entry);
+          self.entries.push(entry);
 
           // Track slow translations
-          if (duration > this.config.slowThreshold) {
-            this.trackSlowTranslation(entry);
+          if (duration > self.config.slowThreshold) {
+            self.trackSlowTranslation(entry);
           }
 
           // Limit total entries to prevent memory leak
-          if (this.entries.length > 10000) {
-            this.entries = this.entries.slice(-5000); // Keep last half
+          if (self.entries.length > 10000) {
+            self.entries = self.entries.slice(-5000); // Keep last half
           }
         }
 
@@ -87,13 +89,10 @@ export class PerformanceTracker {
     const slowEntries = this.getMetrics().slowTranslations;
 
     if (slowEntries.length >= this.config.maxSlowEntries) {
-      // Remove oldest slow entry
       slowEntries.shift();
     }
 
     slowEntries.push(entry);
-
-    // Sort by duration (slowest first)
     slowEntries.sort((a, b) => b.duration - a.duration);
   }
 
@@ -144,7 +143,7 @@ export class PerformanceTracker {
     const sorted = [...this.entries].sort((a, b) => a.duration - b.duration);
     const index = Math.ceil((percentile / 100) * sorted.length) - 1;
 
-    return sorted[Math.max(0, index)].duration;
+    return sorted[Math.max(0, index)]?.duration ?? 0;
   }
 
   generateReport(): string {

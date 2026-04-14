@@ -1,13 +1,13 @@
-import { getSafeLocalStorage } from "../../local-storage.ts";
-import { en } from "../locales/en.ts";
+import { getSafeLocalStorage } from "./local-storage.js";
+import { en } from "../locales/en.js";
 import {
   DEFAULT_LOCALE,
   SUPPORTED_LOCALES,
   isSupportedLocale,
   loadLazyLocaleTranslation,
   resolveNavigatorLocale,
-} from "./registry.ts";
-import type { Locale, TranslationMap } from "./types.ts";
+} from "./registry.js";
+import type { Locale, TranslationMap } from "./types.js";
 
 type Subscriber = (locale: Locale) => void;
 
@@ -48,12 +48,13 @@ class I18nManager {
 
   private resolveInitialLocale(): Locale {
     const saved = this.readStoredLocale();
-    if (isSupportedLocale(saved)) {
+    if (saved && isSupportedLocale(saved)) {
       return saved;
     }
-    const language =
-      typeof globalThis.navigator?.language === "string" ? globalThis.navigator.language : null;
-    return resolveNavigatorLocale(language ?? "");
+
+    const detected = resolveNavigatorLocale();
+
+    return detected ?? DEFAULT_LOCALE;
   }
 
   private loadLocale() {
@@ -79,7 +80,7 @@ class I18nManager {
 
     if (needsTranslationLoad) {
       try {
-        const translation = await loadLazyLocaleTranslation(locale);
+        const translation = await loadLazyLocaleTranslation(locale as Exclude<Locale, "en">);
         if (!translation) {
           return;
         }

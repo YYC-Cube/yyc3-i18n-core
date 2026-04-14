@@ -1,4 +1,4 @@
-import { t } from "./translate.ts";
+import { t } from "./translate.js";
 
 interface I18nAuditEntry {
   key: string;
@@ -66,8 +66,10 @@ class I18nAuditLogger {
     for (const key of Array.from(report.uniqueKeys).sort()) {
       const examples = report.entries.filter(e => e.key === key).slice(0, 3);
       output += `❌ ${key}\n`;
-      output += `   Example fallback: "${examples[0].fallback}"\n`;
-      output += `   Found in: ${examples[0].location}\n\n`;
+      if (examples.length > 0) {
+        output += `   Example fallback: "${examples[0]?.fallback}"\n`;
+        output += `   Found in: ${examples[0]?.location}\n\n`;
+      }
     }
 
     output += `${"=".repeat(80)}\n\n`;

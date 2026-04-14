@@ -1,4 +1,4 @@
-import type { Locale, TranslationMap } from "./types.ts";
+import type { Locale, TranslationMap } from "./types.js";
 
 type LazyLocale = Exclude<Locale, "en">;
 type LocaleModule = Record<string, TranslationMap>;
@@ -25,85 +25,75 @@ const LAZY_LOCALES: readonly LazyLocale[] = [
 const LAZY_LOCALE_REGISTRY: Record<LazyLocale, LazyLocaleRegistration> = {
   "zh-CN": {
     exportName: "zh_CN",
-    loader: () => import("../locales/zh-CN.ts"),
+    loader: () => import("../locales/zh-CN.js"),
   },
   "zh-TW": {
     exportName: "zh_TW",
-    loader: () => import("../locales/zh-TW.ts"),
+    loader: () => import("../locales/zh-TW.js"),
   },
   ja: {
     exportName: "ja",
-    loader: () => import("../locales/ja.ts"),
+    loader: () => import("../locales/ja.js"),
   },
   ko: {
     exportName: "ko",
-    loader: () => import("../locales/ko.ts"),
+    loader: () => import("../locales/ko.js"),
   },
   fr: {
     exportName: "fr",
-    loader: () => import("../locales/fr.ts"),
+    loader: () => import("../locales/fr.js"),
   },
   de: {
     exportName: "de",
-    loader: () => import("../locales/de.ts"),
+    loader: () => import("../locales/de.js"),
   },
   es: {
     exportName: "es",
-    loader: () => import("../locales/es.ts"),
+    loader: () => import("../locales/es.js"),
   },
   "pt-BR": {
     exportName: "pt_BR",
-    loader: () => import("../locales/pt-BR.ts"),
+    loader: () => import("../locales/pt-BR.js"),
   },
   ar: {
     exportName: "ar",
-    loader: () => import("../locales/ar.ts"),
+    loader: () => import("../locales/ar.js"),
   },
 };
 
 export const SUPPORTED_LOCALES: ReadonlyArray<Locale> = [DEFAULT_LOCALE, ...LAZY_LOCALES];
 
-export function isSupportedLocale(value: string | null | undefined): value is Locale {
-  return value !== null && value !== undefined && SUPPORTED_LOCALES.includes(value as Locale);
+export function isSupportedLocale(locale: string): locale is Locale {
+  return SUPPORTED_LOCALES.includes(locale as Locale);
 }
 
-function isLazyLocale(locale: Locale): locale is LazyLocale {
-  return LAZY_LOCALES.includes(locale as LazyLocale);
-}
-
-export function resolveNavigatorLocale(navLang: string): Locale {
-  if (navLang.startsWith("zh")) {
-    return navLang === "zh-TW" || navLang === "zh-HK" ? "zh-TW" : "zh-CN";
-  }
-  if (navLang.startsWith("pt")) {
-    return "pt-BR";
-  }
-  if (navLang.startsWith("de")) {
-    return "de";
-  }
-  if (navLang.startsWith("es")) {
-    return "es";
-  }
-  if (navLang.startsWith("ja")) {
-    return "ja";
-  }
-  if (navLang.startsWith("ko")) {
-    return "ko";
-  }
-  if (navLang.startsWith("fr")) {
-    return "fr";
-  }
-  if (navLang.startsWith("ar")) {
-    return "ar";
-  }
-  return DEFAULT_LOCALE;
-}
-
-export async function loadLazyLocaleTranslation(locale: Locale): Promise<TranslationMap | null> {
-  if (!isLazyLocale(locale)) {
-    return null;
-  }
+export async function loadLazyLocaleTranslation(locale: LazyLocale): Promise<TranslationMap> {
   const registration = LAZY_LOCALE_REGISTRY[locale];
+
+  if (!registration) {
+    throw new Error(`Unsupported locale: ${locale}`);
+  }
+
   const module = await registration.loader();
-  return module[registration.exportName] ?? null;
+  return module[registration.exportName] as TranslationMap;
+}
+
+export function resolveNavigatorLocale(): Locale | null {
+  if (typeof navigator === 'undefined') return null;
+
+  const browserLocales = navigator.languages || [navigator.language];
+
+  for (const locale of browserLocales) {
+    if (isSupportedLocale(locale)) {
+      return locale;
+    }
+
+    // Try base language (e.g., "zh" from "zh-CN")
+    const baseLang = locale.split('-')[0];
+    if (baseLang && isSupportedLocale(baseLang as Locale)) {
+      return baseLang as Locale;
+    }
+  }
+
+  return null;
 }

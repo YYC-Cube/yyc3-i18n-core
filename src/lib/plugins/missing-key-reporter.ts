@@ -39,6 +39,8 @@ export class MissingKeyReporter {
   }
 
   createPlugin(): I18nPlugin {
+    const self = this; // Preserve context
+
     return {
       name: "missing-key-reporter",
       version: "1.0.0",
@@ -46,17 +48,16 @@ export class MissingKeyReporter {
       onMissingKey(key: string, locale: Locale): string | undefined {
         const entryKey = `${locale}:${key}`;
 
-        if (this.entries.has(entryKey)) {
-          const existing = this.entries.get(entryKey)!;
+        if (self.entries.has(entryKey)) {
+          const existing = self.entries.get(entryKey)!;
           existing.count++;
           existing.timestamp = Date.now();
         } else {
-          if (this.entries.size >= this.config.maxEntries) {
-            // Evict oldest entry
+          if (self.entries.size >= self.config.maxEntries) {
             let oldestKey = "";
             let oldestTime = Infinity;
 
-            for (const [k, v] of this.entries) {
+            for (const [k, v] of self.entries) {
               if (v.timestamp < oldestTime) {
                 oldestTime = v.timestamp;
                 oldestKey = k;
@@ -64,11 +65,11 @@ export class MissingKeyReporter {
             }
 
             if (oldestKey) {
-              this.entries.delete(oldestKey);
+              self.entries.delete(oldestKey);
             }
           }
 
-          this.entries.set(entryKey, {
+          self.entries.set(entryKey, {
             key,
             locale,
             timestamp: Date.now(),
@@ -76,7 +77,7 @@ export class MissingKeyReporter {
           });
         }
 
-        return undefined; // Don't modify behavior
+        return undefined;
       },
     };
   }
