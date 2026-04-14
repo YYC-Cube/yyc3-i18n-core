@@ -64,7 +64,7 @@ jobs:
       - name: Publish to npm
         run: npm publish --provenance --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.YYC_NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.YYC3_NPM_TOKEN }}
 
   publish-gpr:
     name: Publish to GitHub Packages
@@ -96,4 +96,4 @@ jobs:
       - name: Publish to GitHub Packages
         run: npm publish --provenance
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.YYC_GIT_HUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.YYCCUBE_GIT_TOKEN }}
