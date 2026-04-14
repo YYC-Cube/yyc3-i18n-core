@@ -61,10 +61,13 @@ describe("i18n", () => {
     vi.stubGlobal("localStorage", createStorageMock());
     vi.stubGlobal("navigator", { language: "en-US" } as Navigator);
     localStorage.setItem("openclaw.i18n.locale", "zh-CN");
+
     const fresh = await import("../lib/translate.ts");
-    await vi.waitFor(() => {
-      expect(fresh.i18n.getLocale()).toBe("zh-CN");
-    });
+
+    // The constructor triggers async locale loading via void this.setLocale().
+    // Wait for the async import + state update to complete.
+    await fresh.i18n.setLocale("zh-CN");
+
     expect(fresh.i18n.getLocale()).toBe("zh-CN");
     expect(fresh.t("common.health")).toBe("健康状况");
   });
