@@ -46,7 +46,7 @@ function pluginExample() {
         logMissingKeys: true,
         logLocaleChanges: true
     });
-    i18n.plugins.register(logger.createPlugin());
+    i18n.plugins.register(logger);
 
     // Add missing key reporter for production
     const reporter = new MissingKeyReporter({
